@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>土地家屋調査士 暗記クイズ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#1a1a2e;color:#eee;min-height:100vh}
+header{background:#16213e;padding:14px;text-align:center;border-bottom:2px solid #0f3460}
+header h1{font-size:1.05rem;color:#e94560}
+header p{font-size:0.75rem;color:#888;margin-top:3px}
+.tab-bar{display:flex;background:#16213e;border-bottom:1px solid #0f3460;position:sticky;top:0;z-index:10}
+.tab-btn{flex:1;padding:10px 4px;background:none;border:none;color:#888;cursor:pointer;font-size:0.8rem}
+.tab-btn.active{color:#e94560;border-bottom:2px solid #e94560}
+.screen{display:none;padding:14px;padding-bottom:40px}
+.screen.active{display:block}
+.score-bar{display:flex;gap:8px;background:#16213e;border-radius:10px;padding:10px 14px;margin-bottom:12px}
+.score-item{text-align:center;flex:1}
+.score-num{font-size:1.2rem;font-weight:bold}
+.score-label{font-size:0.65rem;color:#888;margin-top:2px}
+.quiz-controls{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.ctrl-btn{padding:8px 14px;border:none;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:bold}
+.ctrl-btn.primary{background:#e94560;color:#fff}
+.ctrl-btn.secondary{background:#0f3460;color:#fff}
+.progress-info{font-size:0.8rem;color:#aaa;margin-left:auto}
+.card{background:#16213e;border-radius:12px;padding:20px;border:1px solid #0f3460;min-height:220px;display:flex;flex-direction:column;justify-content:space-between}
+.card-category{font-size:0.7rem;color:#e94560;font-weight:bold;margin-bottom:10px}
+.card-question{font-size:0.95rem;line-height:1.7;color:#eee;flex:1;margin-bottom:18px}
+.card-answer{background:#0f3460;border-radius:8px;padding:14px;font-size:0.9rem;line-height:1.7;color:#7ec8e3;display:none}
+.card-answer.show{display:block}
+.card-answer-label{font-size:0.65rem;color:#aaa;margin-bottom:6px}
+.card-actions{display:flex;gap:8px;margin-top:14px}
+.action-btn{flex:1;padding:12px;border:none;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:bold}
+.action-btn.reveal{background:#0f3460;color:#7ec8e3}
+.action-btn.correct{background:#27ae60;color:#fff}
+.action-btn.wrong{background:#e74c3c;color:#fff}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.cat-btn{padding:10px 8px;background:#16213e;border:1px solid #0f3460;border-radius:8px;color:#ccc;cursor:pointer;font-size:0.75rem;text-align:left;line-height:1.4}
+.cat-btn.all{grid-column:1/-1;text-align:center;background:#0f3460}
+.cat-btn.selected{border-color:#e94560;background:#2a1020;color:#fff}
+.section-title{font-size:0.85rem;color:#aaa;margin-bottom:10px;font-weight:bold}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:0.78rem;color:#aaa;margin-bottom:5px}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:10px;background:#16213e;border:1px solid #0f3460;border-radius:8px;color:#eee;font-size:0.88rem}
+.form-group textarea{min-height:72px;resize:vertical}
+hr{border:none;border-top:1px solid #0f3460;margin:20px 0}
+.q-item{background:#16213e;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #0f3460}
+.q-item-cat{font-size:0.68rem;color:#e94560;margin-bottom:3px}
+.q-item-q{font-size:0.83rem;color:#ddd;margin-bottom:5px}
+.q-item-a{font-size:0.78rem;color:#7ec8e3}
+.del-btn{margin-top:7px;padding:3px 9px;background:none;border:1px solid #e74c3c;border-radius:4px;color:#e74c3c;font-size:0.72rem;cursor:pointer}
+.filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px}
+.filter-chip{padding:5px 11px;border-radius:20px;border:1px solid #0f3460;background:#16213e;color:#888;font-size:0.72rem;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.filter-chip.active{background:#e94560;border-color:#e94560;color:#fff}
+.result-card{background:#16213e;border-radius:8px;padding:12px;margin-bottom:8px;border-left:4px solid}
+.result-card.c{border-color:#27ae60}
+.result-card.w{border-color:#e74c3c}
+.result-meta{font-size:0.68rem;color:#888;margin-bottom:4px}
+.result-q{font-size:0.82rem;color:#ddd;margin-bottom:5px}
+.result-a{font-size:0.78rem;color:#7ec8e3}
+.empty{text-align:center;padding:40px 20px;color:#555}
+.notice{background:#16213e;border:1px solid #f39c12;border-radius:8px;padding:10px 12px;font-size:0.78rem;color:#f39c12;margin-bottom:14px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏠 土地家屋調査士 暗記クイズ</h1>
+  <p>藤澤悠太さん専用</p>
+</header>
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('quiz',this)">クイズ</button>
+  <button class="tab-btn" onclick="showTab('category',this)">カテゴリ</button>
+  <button class="tab-btn" onclick="showTab('add',this)">追加</button>
+  <button class="tab-btn" onclick="showTab('results',this)">結果</button>
+</div>
+
+<div id="s-quiz" class="screen active">
+  <div class="score-bar">
+    <div class="score-item"><div class="score-num" id="sc-c" style="color:#27ae60">0</div><div class="score-label">正解</div></div>
+    <div class="score-item"><div class="score-num" id="sc-w" style="color:#e74c3c">0</div><div class="score-label">不正解</div></div>
+    <div class="score-item"><div class="score-num" id="sc-r" style="color:#7ec8e3">-</div><div class="score-label">残り</div></div>
+    <div class="score-item"><div class="score-num" id="sc-p" style="color:#f39c12">-</div><div class="score-label">正答率</div></div>
+  </div>
+  <div class="quiz-controls">
+    <button class="ctrl-btn primary" onclick="startQuiz()">▶ スタート</button>
+    <button class="ctrl-btn secondary" onclick="shuffleAndRestart()">🔀 シャッフル</button>
+    <span class="progress-info" id="prog"></span>
+  </div>
+  <div id="card-area"><div class="empty"><p>「スタート」を押してクイズを始めましょう</p></div></div>
+</div>
+
+<div id="s-category" class="screen">
+  <p class="section-title">カテゴリで絞り込み（複数選択可）</p>
+  <div class="cat-grid" id="cat-grid"></div>
+</div>
+
+<div id="s-add" class="screen">
+  <p class="section-title">新しい問題を追加</p>
+  <div class="notice">💡 全カテゴリ（A〜Y）の内容が登録済みです。新しい項目があればここから追加できます。</div>
+  <div class="form-group">
+    <label>カテゴリ（既存から選ぶ）</label>
+    <select id="f-cat-sel"><option value="">選択...</option></select>
+  </div>
+  <div class="form-group">
+    <label>または新しいカテゴリ名を入力</label>
+    <input id="f-cat-new" type="text" placeholder="例）G 取消・解除と第三者">
+  </div>
+  <div class="form-group">
+    <label>問題文 ★</label>
+    <textarea id="f-q" placeholder="例）詐欺による取消しは善意の第三者に対抗できる？"></textarea>
+  </div>
+  <div class="form-group">
+    <label>解答 ★</label>
+    <textarea id="f-a" placeholder="例）対抗できない（善意の第三者は保護される）"></textarea>
+  </div>
+  <div class="form-group">
+    <label>逆問題の質問文（省略可）</label>
+    <input id="f-rq" type="text" placeholder="例）詐欺取消しで保護されるのは？">
+  </div>
+  <button class="ctrl-btn primary" style="width:100%" onclick="addQ()">➕ 追加する</button>
+  <hr>
+  <p class="section-title">問題一覧</p>
+  <div class="filter-row" id="list-filters"></div>
+  <div id="q-list"></div>
+</div>
+
+<div id="s-results" class="screen">
+  <p class="section-title">回答履歴</p>
+  <div id="results-list"><div class="empty"><p>まだ回答がありません</p></div></div>
+</div>
+
+<script>
+let DB = [
+  // ===== A: 3月の制限 =====
+  {id:1,  cat:"A 3月の制限", q:"職印証明書の3月の制限は？", a:"有り"},
+  {id:2,  cat:"A 3月の制限", q:"戸籍謄本の3月の制限は？", a:"有り"},
+  {id:3,  cat:"A 3月の制限", q:"法人の登記事項証明書の3月の制限は？", a:"有り（※工事施工会社の登記簿謄本は3月の制限無し）"},
+  {id:4,  cat:"A 3月の制限", q:"申請書や委任状に押印した実印の印鑑証明書の3月の制限は？", a:"有り"},
+  {id:5,  cat:"A 3月の制限", q:"公務員が作成した代理権限証書（法定代理）の3月の制限は？", a:"有り"},
+  {id:6,  cat:"A 3月の制限", q:"法定相続情報一覧図の3月の制限は？", a:"無し"},
+  {id:7,  cat:"A 3月の制限", q:"住所証明書の3月の制限は？", a:"無し"},
+  {id:8,  cat:"A 3月の制限", q:"本人確認情報（職印証明書は期限あり）の3月の制限は？", a:"無し"},
+  {id:9,  cat:"A 3月の制限", q:"工事業者の印鑑証明書の3月の制限は？", a:"無し"},
+  {id:10, cat:"A 3月の制限", q:"抵当権者の印鑑証明書の3月の制限は？", a:"無し"},
+  {id:11, cat:"A 3月の制限", q:"委任状の3月の制限は？", a:"無し"},
+  {id:12, cat:"A 3月の制限", q:"公務員が作成した代理権限証書（任意代理）の3月の制限は？", a:"無し"},
+  {id:13, cat:"A 3月の制限", q:"3月の制限が「有り」の書類を5つ挙げよ", a:"①職印証明書　②戸籍謄本　③法人の登記事項証明書　④実印の印鑑証明書（申請書・委任状に押印）　⑤公務員が作成した代理権限証書（法定代理）"},
+  {id:14, cat:"A 3月の制限", q:"3月の制限が「無し」の書類を代表的に挙げよ", a:"法定相続情報一覧図・住所証明書・本人確認情報・印鑑証明書（工事業者・抵当権者）・委任状・公務員作成の代理権限証書（任意代理）"},
+
+  // ===== B: 各情報の保存期間 =====
+  {id:50, cat:"B 各情報の保存期間", q:"土地の閉鎖登記記録の保存期間は？", a:"50年間"},
+  {id:51, cat:"B 各情報の保存期間", q:"「50年間」保存されるのは？", a:"土地の閉鎖登記記録"},
+  {id:52, cat:"B 各情報の保存期間", q:"抹消された共同担保目録の保存期間は？", a:"10年間"},
+  {id:53, cat:"B 各情報の保存期間", q:"受付帳に記録された情報の保存期間は？", a:"10年間"},
+  {id:54, cat:"B 各情報の保存期間", q:"登記識別情報の失効の申出の情報の保存期間は？", a:"10年間"},
+  {id:55, cat:"B 各情報の保存期間", q:"「10年間」保存されるものを3つ挙げよ", a:"①抹消された共同担保目録　②受付帳に記録された情報　③登記識別情報の失効の申出の情報"},
+  {id:56, cat:"B 各情報の保存期間", q:"閉鎖した地図・地図に準ずる図面の保存期間は？", a:"永久"},
+  {id:57, cat:"B 各情報の保存期間", q:"閉鎖した建物所在図の保存期間は？", a:"永久"},
+  {id:58, cat:"B 各情報の保存期間", q:"「永久」保存されるものを2つ挙げよ", a:"①閉鎖した地図・地図に準ずる図面　②閉鎖した建物所在図"},
+  {id:59, cat:"B 各情報の保存期間", q:"建物の閉鎖登記記録の保存期間は？", a:"30年間"},
+  {id:60, cat:"B 各情報の保存期間", q:"登記の申請情報と添付情報の保存期間は？", a:"30年間"},
+  {id:61, cat:"B 各情報の保存期間", q:"変更または更生前の図面の保存期間は？", a:"30年間"},
+  {id:62, cat:"B 各情報の保存期間", q:"電磁的記録に保存された書面の図面の保存期間は？", a:"30年間"},
+  {id:63, cat:"B 各情報の保存期間", q:"電磁的記録に保存された書面の地役権図面の保存期間は？", a:"30年間"},
+  {id:64, cat:"B 各情報の保存期間", q:"職権表示登記つづり込み帳の書類情報の保存期間は？", a:"30年間"},
+  {id:65, cat:"B 各情報の保存期間", q:"筆界特定書以外の手続き記録の情報の保存期間は？", a:"30年間"},
+  {id:66, cat:"B 各情報の保存期間", q:"「30年間」保存されるものを代表的に挙げよ", a:"建物の閉鎖登記記録・登記の申請情報と添付情報・変更または更生前の図面・電磁的記録の書面図面・地役権図面・職権表示登記つづり込み帳・筆界特定書以外の手続き記録"},
+  {id:67, cat:"B 各情報の保存期間", q:"職権表示等事件簿に記録された情報の保存期間は？", a:"5年間"},
+  {id:68, cat:"B 各情報の保存期間", q:"決定・審査請求事件簿の情報の保存期間は？", a:"5年間"},
+  {id:69, cat:"B 各情報の保存期間", q:"法定相続情報一覧図の保存期間は？", a:"5年間"},
+  {id:70, cat:"B 各情報の保存期間", q:"「5年間」保存されるものを3つ挙げよ", a:"①職権表示等事件簿に記録された情報　②決定・審査請求事件簿の情報　③法定相続情報一覧図"},
+  {id:71, cat:"B 各情報の保存期間", q:"請求書類つづり込み帳の情報の保存期間は？", a:"1年間"},
+  {id:72, cat:"B 各情報の保存期間", q:"登記情報の証明の請求の受付情報の保存期間は？", a:"1年間"},
+  {id:73, cat:"B 各情報の保存期間", q:"「1年間」保存されるものを2つ挙げよ", a:"①請求書類つづり込み帳の情報　②登記情報の証明の請求の受付情報"},
+  {id:74, cat:"B 各情報の保存期間", q:"土地家屋調査士事件簿の情報の保存期間は？", a:"7年間"},
+  {id:75, cat:"B 各情報の保存期間", q:"「7年間」保存されるのは？", a:"土地家屋調査士事件簿の情報"},
+  {id:76, cat:"B 各情報の保存期間", q:"土地家屋調査士の領収書写しの保存期間は？", a:"3年間"},
+  {id:77, cat:"B 各情報の保存期間", q:"不正登記防止申出書類つづり込み帳の保存期間は？", a:"3年間"},
+  {id:78, cat:"B 各情報の保存期間", q:"「3年間」保存されるものを2つ挙げよ", a:"①土地家屋調査士の領収書写し　②不正登記防止申出書類つづり込み帳"},
+  {id:79, cat:"B 各情報の保存期間", q:"保存期間を長い順に並べよ（覚え方）", a:"永久＞50年＞30年＞10年＞7年＞5年＞3年＞1年"},
+
+  // ===== C: 間違いやすい登記の目的 =====
+  {id:200, cat:"C 間違いやすい登記の目的", q:"普通建物を区分して区分建物とする場合の登記の目的は？", a:"建物区分登記"},
+  {id:201, cat:"C 間違いやすい登記の目的", q:"普通建物が合体により区分建物になる場合の登記の目的は？", a:"建物表題部変更登記 ＋ 建物合体登記"},
+  {id:202, cat:"C 間違いやすい登記の目的", q:"2戸の区分建物のうち一戸を普通建物と合体して単棟建物になる場合の登記の目的は？", a:"建物合体登記"},
+  {id:203, cat:"C 間違いやすい登記の目的", q:"区分建物に新たに敷地権が生じた場合の登記の目的は？", a:"区分建物表題部変更登記（敷地権発生）"},
+  {id:204, cat:"C 間違いやすい登記の目的", q:"区分建物の敷地権が消滅した場合の登記の目的は？", a:"区分建物表題部変更登記（敷地権消）"},
+  {id:205, cat:"C 間違いやすい登記の目的", q:"「建物区分登記」を行うのはどのような場合？", a:"普通建物を区分して区分建物とする場合"},
+  {id:206, cat:"C 間違いやすい登記の目的", q:"「建物合体登記」を行うのはどのような場合？", a:"2棟以上の建物を合体して1棟にする場合"},
+
+  // ===== D: 共有物の保存・管理・変更 =====
+  {id:250, cat:"D 共有物の保存・管理・変更", q:"保存行為とはどのような行為か？何人から出来る？", a:"現状を維持する行為（例：自転車を修理する）。一人から出来る。"},
+  {id:251, cat:"D 共有物の保存・管理・変更", q:"管理行為とはどのような行為か？決定に必要なのは？", a:"利用・改良する行為（例：賃貸借契約の解除）。共有者の過半数で決定できる。"},
+  {id:252, cat:"D 共有物の保存・管理・変更", q:"変更行為とはどのような行為か？必要な同意は？", a:"共有物の売却・解体・取壊しなど。共有者全員の合意が必要。"},
+  {id:253, cat:"D 共有物の保存・管理・変更", q:"持分の変更のための分筆の場合、単独で申請できる登記は？", a:"土地分筆・合筆（単独申請可）"},
+  {id:254, cat:"D 共有物の保存・管理・変更", q:"一人から申請できるのは保存・管理・変更のどれ？", a:"保存行為"},
+  {id:255, cat:"D 共有物の保存・管理・変更", q:"共有者の過半数で決定できる行為は？", a:"管理行為"},
+  {id:256, cat:"D 共有物の保存・管理・変更", q:"共有者全員の合意が必要な行為は？", a:"変更行為"},
+
+  // ===== E: 業務制限について =====
+  {id:300, cat:"E 業務制限について", q:"過去に公務員として扱った事件は受任出来る？", a:"全て受任出来ない"},
+  {id:301, cat:"E 業務制限について", q:"筆界特定・ADRで相談を受けて賛助・信頼関係を築いていた場合、相手方からの依頼は受任出来る？", a:"受任出来ない"},
+  {id:302, cat:"E 業務制限について", q:"調査士が筆界特定・ADRを受任している場合、相手方からの「他の事件」は原則受任出来る？", a:"受任出来ない（依頼者が同意すれば受任可）"},
+  {id:303, cat:"E 業務制限について", q:"調査士が書類や電磁的記録の作成業務のみ受任している場合（A）、相手方からの他の事件は？", a:"受任可"},
+  {id:304, cat:"E 業務制限について", q:"調査士法人の場合（B）、相手方からの他の事件は同意があっても受任出来る？", a:"競業禁止にあたるので同意があっても受任不可"},
+  {id:305, cat:"E 業務制限について", q:"A・Bの規定（書類作成のみなら受任可・法人は同意があっても受任不可）が適用されるのはどの場合のみ？", a:"「他の事件」の時だけ"},
+  {id:306, cat:"E 業務制限について", q:"法人社員が自ら関与していなかった事件について、脱退後は相手方から受任出来る？", a:"自ら関与していなければ脱退後は受任可能（自ら関わっていれば脱退後も受任不可）"},
+  {id:307, cat:"E 業務制限について", q:"従事している期間内に自ら関与していた場合、脱退後も受任不可か？", a:"受任不可（脱退後も受任不可）"},
+  {id:308, cat:"E 業務制限について", q:"従事している期間内に自ら関与していない場合、脱退後は受任出来る？", a:"受任可（脱退後は）"},
+  {id:309, cat:"E 業務制限について", q:"業務制限のポイント：同じ事件は基本的に受任出来る？", a:"基本的に受任出来ない"},
+  {id:310, cat:"E 業務制限について", q:"業務制限のポイント：「他の事件」について、法人の社員は同意があれば受任可か？", a:"不可（競業禁止にあたるため、同意があっても受任不可）"},
+
+  // ===== F: 原本還付 =====
+  {id:350, cat:"F 原本還付", q:"原本還付で戻ってこない書面は何種類？", a:"6種類"},
+  {id:351, cat:"F 原本還付", q:"原本還付されない書面（6つ）を挙げよ", a:"①偽造された書面・不正な登記の疑いがある書面\n②申請書や代理権限証書に押印した実印の印鑑証明書\n③第三者の証明・承認書に押印した実印の印鑑証明書\n④当該申請のみに作成された委任状その他の書面\n⑤登記識別情報を記載した書面\n⑥資格者代理人の本人確認情報"},
+  {id:352, cat:"F 原本還付", q:"相続関係説明図の提供で原本還付できるものは？", a:"戸籍全部事項証明書"},
+  {id:353, cat:"F 原本還付", q:"戸籍全部事項証明書を原本還付するには何を提供すれば良い？", a:"相続関係説明図"},
+
+  // ===== G: 取消・解除と第三者（A→B→C） =====
+  {id:370, cat:"G 取消・解除と第三者（A→B→C）", q:"契約の取消前の第三者Cは登記があれば勝てる？", a:"負ける（無権利者になるので代行関係に立たない。登記があっても関係なし）"},
+  {id:371, cat:"G 取消・解除と第三者（A→B→C）", q:"錯誤・詐欺による取消前の第三者（例外）：Cが勝つための条件は？", a:"「善意無過失」のCは登記を備えなくても勝ち"},
+  {id:372, cat:"G 取消・解除と第三者（A→B→C）", q:"取消後の第三者Cが勝つための条件は？", a:"Cは登記を備えれば勝ち（二重譲渡と同じで登記の先後）"},
+  {id:373, cat:"G 取消・解除と第三者（A→B→C）", q:"契約の解除前の第三者C：Cが登記を具備している場合の結果は？", a:"Cの勝ち"},
+  {id:374, cat:"G 取消・解除と第三者（A→B→C）", q:"契約の解除前の第三者C：Cが登記を具備していない場合の結果は？", a:"Cの負け"},
+  {id:375, cat:"G 取消・解除と第三者（A→B→C）", q:"解除後の第三者Cが勝つための条件は？", a:"Cは登記を備えれば勝ち（二重譲渡と同じで登記の先後）"},
+  {id:376, cat:"G 取消・解除と第三者（A→B→C）", q:"時効完成前の第三者Cは登記なくして対抗できる？", a:"できる（Cは登記なくして対抗できる）"},
+  {id:377, cat:"G 取消・解除と第三者（A→B→C）", q:"時効完成後の第三者Cが勝つための条件は？", a:"Cは登記を備えれば勝ち（二重譲渡と同じで登記の先後）"},
+  {id:378, cat:"G 取消・解除と第三者（A→B→C）", q:"遺産分割前の第三者（Ax→B・C→D）：Bは自己の持分について登記なくして対抗できる？", a:"できる（Bは自己の持分については登記なくして対抗可）"},
+  {id:379, cat:"G 取消・解除と第三者（A→B→C）", q:"遺産分割前の第三者（Ax→B・C→D）：DはCの持分について保護される？", a:"Dは登記を備えていれば保護される"},
+  {id:380, cat:"G 取消・解除と第三者（A→B→C）", q:"遺産分割後の第三者（Ax→B・C→D）：Dが対抗するための条件は？", a:"Dは登記を備えればCの持分について対抗可"},
+  {id:381, cat:"G 取消・解除と第三者（A→B→C）", q:"まとめ：「○○の後」の第三者の扱いは？", a:"二重譲渡と同じ（登記の先後で決まる）"},
+  {id:382, cat:"G 取消・解除と第三者（A→B→C）", q:"まとめ：「○○の前」の第三者の扱いは？", a:"ケースに分かれる（登記の有無・善意無過失など条件による）"},
+  {id:383, cat:"G 取消・解除と第三者（A→B→C）", q:"「登記を備えなくても勝ち」になるのはどのケース？", a:"錯誤・詐欺による取消前の第三者で善意無過失のC"},
+  {id:384, cat:"G 取消・解除と第三者（A→B→C）", q:"「登記なくして対抗できる」のはどのケース？", a:"時効完成前の第三者C、遺産分割前後でBが自己の持分を主張する場合"},
+  {id:385, cat:"G 取消・解除と第三者（A→B→C）", q:"取消後・解除後・時効完成後の第三者に共通するルールは？", a:"二重譲渡と同じで、登記の先後で勝敗が決まる"},
+
+  // ===== H: 受け取りの期日 =====
+  {id:400, cat:"H 受け取りの期日", q:"登記識別情報の通知（電子申請時）の受け取り期限は？", a:"30日以内にダウンロード"},
+  {id:401, cat:"H 受け取りの期日", q:"「30日以内にダウンロード」が期限なのはどの通知？", a:"登記識別情報の通知（電子申請時）"},
+  {id:402, cat:"H 受け取りの期日", q:"登記識別情報の通知（書面申請時）の受け取り期限は？", a:"3ヶ月以内に受領"},
+  {id:403, cat:"H 受け取りの期日", q:"「3ヶ月以内に受領」が期限なのはどの通知？", a:"登記識別情報の通知（書面申請時）"},
+  {id:404, cat:"H 受け取りの期日", q:"事前通知（国内）の申し出期限は？", a:"2週間以内に申し出"},
+  {id:405, cat:"H 受け取りの期日", q:"「2週間以内の申し出」が必要なのは？", a:"事前通知（国内）"},
+  {id:406, cat:"H 受け取りの期日", q:"事前通知（国外）の申し出期限は？", a:"4週間以内に申し出"},
+  {id:407, cat:"H 受け取りの期日", q:"「4週間以内の申し出」が必要なのは？", a:"事前通知（国外）"},
+
+  // ===== I: 申請書の還付 =====
+  {id:450, cat:"I 申請書の還付", q:"登記申請が【却下】された場合、申請書は還付される？", a:"還付されない"},
+  {id:451, cat:"I 申請書の還付", q:"登記申請が【却下】された場合、登録免許税は？", a:"還付のみ（再使用不可）"},
+  {id:452, cat:"I 申請書の還付", q:"登記申請を【取り下げ】た場合、申請書は還付される？", a:"還付される"},
+  {id:453, cat:"I 申請書の還付", q:"登記申請を【取り下げ】た場合、登録免許税は？", a:"再使用可能"},
+  {id:454, cat:"I 申請書の還付", q:"地図訂正の申し出が【却下】された場合、申請書は還付される？", a:"還付されない"},
+  {id:455, cat:"I 申請書の還付", q:"地図訂正の申し出を【取り下げ】た場合、申請書は還付される？", a:"還付される"},
+  {id:456, cat:"I 申請書の還付", q:"筆界特定の申請が【却下】された場合、申請書は還付される？", a:"還付されない"},
+  {id:457, cat:"I 申請書の還付", q:"筆界特定の申請を【取り下げ】た場合、申請書は還付される？", a:"還付されない（却下・取り下げどちらも還付されない）"},
+  {id:458, cat:"I 申請書の還付", q:"却下・取り下げのどちらでも申請書が還付されないのは？", a:"筆界特定の申請"},
+  {id:459, cat:"I 申請書の還付", q:"登録免許税が「再使用可能」になるのはどの場合？", a:"登記申請を取り下げた場合"},
+
+  // ===== J: 土地家屋調査士法（依頼応諾） =====
+  {id:500, cat:"J 土地家屋調査士法（依頼応諾）", q:"調査士が正当事由無しに依頼を拒んだ場合の罰則は？", a:"100万円以下の罰金"},
+  {id:501, cat:"J 土地家屋調査士法（依頼応諾）", q:"「100万円以下の罰金」が科されるのはどんな行為？", a:"正当事由無しに依頼を拒むこと"},
+  {id:502, cat:"J 土地家屋調査士法（依頼応諾）", q:"依頼応諾義務がない業務（筆界特定関連）は？", a:"筆界特定手続きの代理と相談（ただし書類作成等の業務は義務あり）"},
+  {id:503, cat:"J 土地家屋調査士法（依頼応諾）", q:"依頼応諾義務がない業務（ADR関連）は？", a:"民間紛争解決手続代理関係業務（ADR）"},
+
+  // ===== K: 代理まとめ =====
+  {id:550, cat:"K 代理まとめ", q:"顕名なしで代理した場合、相手方はどのような扱いをするか？", a:"代理人自身の法律行為として扱う"},
+  {id:551, cat:"K 代理まとめ", q:"顕名なしでも本人に法律効果が及ぶのはどのような場合？", a:"相手方が代理であることを知っていた場合、または知ることができた場合"},
+  {id:552, cat:"K 代理まとめ", q:"本人が無権代理人を相続した場合、追認を拒絶できるか？", a:"拒絶できない"},
+  {id:553, cat:"K 代理まとめ", q:"無権代理人が本人を相続した場合、追認を拒絶できるか？", a:"拒絶できない"},
+  {id:554, cat:"K 代理まとめ", q:"無権代理と相続：本人側・無権代理人側どちらが相続しても追認拒絶は？", a:"どちらが相続しても追認拒絶できない"},
+  {id:555, cat:"K 代理まとめ", q:"任意代理人と法定代理人で、いつでも復代理を専任できるのはどちら？", a:"法定代理人（任意代理人は原則不可）"},
+  {id:556, cat:"K 代理まとめ", q:"表見代理が成立するための相手方の要件は？", a:"善意・無過失であること"},
+
+  // ===== L: 訂正の申出 =====
+  {id:600, cat:"L 訂正の申出", q:"地図に準ずる図面の地番に誤りがある場合、土地所在図や地積測量図の提出は？", a:"不要"},
+  {id:601, cat:"L 訂正の申出", q:"地図の土地区画・地図に準ずる図面の位置・形状に誤りがある場合、土地所在図や地積測量図の提出は？", a:"必要"},
+  {id:602, cat:"L 訂正の申出", q:"地図に準ずる図面の位置・区画の誤りを登記所備え付けの地積測量図で確認できる場合、図面の省略は？", a:"省略可能"},
+  {id:603, cat:"L 訂正の申出", q:"地図訂正の申出の際に地積に錯誤がある場合は？", a:"訂正の申出と合わせて地積更生登記が必要"},
+  {id:604, cat:"L 訂正の申出", q:"複数の土地の訂正の申出を「一の申出情報」で申請出来る？", a:"出来ない（「一の申出」という言葉は無い）\n※訂正の申出と更生登記を「一の申請兼申出情報」で申請することは出来る"},
+  {id:605, cat:"L 訂正の申出", q:"土地所在図・地積測量図・建物図面等の訂正の申出の場合、登記所備え付けの図面を特定すれば訂正後の図面を省略できる？", a:"省略はできない（地図訂正と違い、訂正後の図面の省略はできない）"},
+  {id:606, cat:"L 訂正の申出", q:"地積や床面積の更生登記が必要な場合、訂正の申出は出来る？", a:"出来ない（地積更生登記をしなければならず、訂正の申出は出来ない。地図訂正と異なる）"},
+  {id:607, cat:"L 訂正の申出", q:"「地図訂正」と「図面（土地所在図等）訂正」で図面省略の扱いが違う点は？", a:"地図訂正：備え付け図面で確認可なら省略可　図面訂正：省略不可"},
+  {id:608, cat:"L 訂正の申出", q:"「地図訂正」と「地積更生登記」の関係は？", a:"地積に錯誤がある場合は地図訂正の申出と合わせて地積更生登記が必要"},
+
+  // ===== M: 地役権について =====
+  {id:650, cat:"M 地役権について", q:"承役地（いいよという方）は分筆・合筆できる？", a:"分筆・合筆可能（一筆の一部に設定出来るから）"},
+  {id:651, cat:"M 地役権について", q:"要役地（お願いという方）は合筆できる？", a:"合筆不可（一筆の一部に設定出来ないから）"},
+  {id:652, cat:"M 地役権について", q:"地役権図面に地積は記載事項か？", a:"記載事項ではない（存する範囲の地積は記載事項ではない）"},
+  {id:653, cat:"M 地役権について", q:"承役地とは「いいよという方」「お願いという方」どちら？", a:"いいよという方（地役権を設定する側）"},
+  {id:654, cat:"M 地役権について", q:"要役地とは「いいよという方」「お願いという方」どちら？", a:"お願いという方（地役権の利益を受ける側）"},
+
+  // ===== N: 調査士の欠格事由 =====
+  {id:700, cat:"N 調査士の欠格事由", q:"未成年者は調査士になれる？", a:"なれない（18歳以上であればなれる）"},
+  {id:701, cat:"N 調査士の欠格事由", q:"処分を受けてから一定期間調査士になれない近似業種は？", a:"弁護士・建築士・司法書士（の免許取消・業務停止）"},
+  {id:702, cat:"N 調査士の欠格事由", q:"近似業種ではないが欠格事由に近しい業種は？", a:"公認会計士"},
+  {id:703, cat:"N 調査士の欠格事由", q:"成戒免職後、何年間調査士になれない？", a:"3年間"},
+  {id:704, cat:"N 調査士の欠格事由", q:"「3年間調査士になれない」となる公務員の処分は？", a:"成戒免職"},
+  {id:705, cat:"N 調査士の欠格事由", q:"減給処分は欠格事由に該当する？", a:"該当しない"},
+
+  // ===== O: 電子申請 =====
+  {id:750, cat:"O 電子申請", q:"本則電子申請とはどのような方式？", a:"全て電子データ（書面の添付情報は一切無し）"},
+  {id:751, cat:"O 電子申請", q:"特則電子申請で送信した書面の取り扱いは？", a:"登記官が定めた相当の期間内に登記官に提示しなければならない"},
+  {id:752, cat:"O 電子申請", q:"特則電子申請で送れないものは？", a:"申請人や代理人が作成した書面、図面系（※代理権限証書は送信可なので注意）"},
+  {id:753, cat:"O 電子申請", q:"調査士報告方式のスペシャルな特徴は？", a:"確認用に書面を提出しなくて良い"},
+  {id:754, cat:"O 電子申請", q:"調査士報告方式で送れない書面は？", a:"第三者の許可・同意・承諾の添付書類、地役権証明書、承諾書、消滅承諾書"},
+  {id:755, cat:"O 電子申請", q:"特則電子申請の書面の添付情報はどのように扱う？", a:"スキャナで読み取って、読み取った者の電子署名があれば良い"},
+
+  // ===== P: 登記所の管轄 =====
+  {id:800, cat:"P 登記所の管轄", q:"公有水面埋め立て（行政区域未確定）の場合の申請先は？", a:"どちらの登記所にも申請出来ない"},
+  {id:801, cat:"P 登記所の管轄", q:"区分建物の規約敷地が別管轄（A登記所）の土地の場合、申請先は？", a:"Aに申請する"},
+  {id:802, cat:"P 登記所の管轄", q:"建物がA・B登記所にまたがっている場合、申請先は？", a:"A・Bどちらにも申請可"},
+  {id:803, cat:"P 登記所の管轄", q:"管轄をまたぐよう入れ行移転した場合、管轄は変更される？", a:"管轄は変更されない"},
+  {id:804, cat:"P 登記所の管轄", q:"増築して他の管轄になった場合、管轄は変更される？", a:"管轄は変更されない"},
+  {id:805, cat:"P 登記所の管轄", q:"A登記所に主建物・B登記所に附属建物があり主建物が滅失した場合の申請先は？", a:"Aに申請"},
+
+  // ===== Q: 復代理 =====
+  {id:850, cat:"Q 復代理", q:"任意代理人の復代理の原則は？", a:"原則復代理不可"},
+  {id:851, cat:"Q 復代理", q:"任意代理人が復代理できるケースは？", a:"本人の許諾とやむを得ない場合のみ"},
+  {id:852, cat:"Q 復代理", q:"任意代理人が復代理に委任した場合の責任範囲は？", a:"復代理の全行為について責任を負う"},
+  {id:853, cat:"Q 復代理", q:"法定代理人は復代理を専任できる？", a:"いつでも復代理専任可"},
+  {id:854, cat:"Q 復代理", q:"法定代理人が復代理を委任した場合の責任範囲（原則）は？", a:"原則全責任を負う"},
+  {id:855, cat:"Q 復代理", q:"法定代理人がやむを得ない事由で復代理を委任した場合の責任範囲は？", a:"選任・監督の範囲に限り責任を負う"},
+  {id:856, cat:"Q 復代理", q:"「選任・監督の範囲に限り責任を負う」のはどのケース？", a:"法定代理人がやむを得ない事由で復代理を委任した場合"},
+
+  // ===== R: 変更証明書・更生証明書 =====
+  {id:900, cat:"R 変更証明書・更生証明書", q:"変更・更生証明書を提出して申請可能な登記は？", a:"土地の地目変更登記、建物の滅失登記"},
+  {id:901, cat:"R 変更証明書・更生証明書", q:"変更・更生証明書の提供で、登記申請以外で可能な手続きは？", a:"申し出（地図訂正の申出・添付図面の訂正の申出・登記識別情報の失効の申出）"},
+  {id:902, cat:"R 変更証明書・更生証明書", q:"「建物の滅失登記」に変更・更生証明書は使える？", a:"使える"},
+  {id:903, cat:"R 変更証明書・更生証明書", q:"「土地の地積更正登記」に変更・更生証明書は使える？", a:"使えない（地目変更登記と建物滅失登記のみ）"},
+
+  // ===== S: 要件 =====
+  {id:950, cat:"S 要件", q:"建物の3要件は？", a:"外気分性・土地定着性・用途性"},
+  {id:951, cat:"S 要件", q:"「外気分性・土地定着性・用途性」はどの要件？", a:"建物の3要件"},
+  {id:952, cat:"S 要件", q:"区分建物の要件は？", a:"構造上の独立性がある・利用上の独立性がある"},
+  {id:953, cat:"S 要件", q:"附属建物の要件は？", a:"①附属建物がある建物の利用を補う建物\n②所有者が同一\n③効用上一体をなしている（所有者の意思に反しない）"},
+  {id:954, cat:"S 要件", q:"時効成立の要件は？", a:"他人の物である・平穏かつ公然と占有していた"},
+  {id:955, cat:"S 要件", q:"一の申請の要件は？", a:"同一の管轄登記所・登記の目的・登記原因及びその日付が同一"},
+
+  // ===== T: 土地家屋調査士法（法人・補助者） =====
+  {id:1000, cat:"T 土地家屋調査士法（法人・補助者）", q:"補助者を置いた時・置かなくなった時の届け出先は？", a:"調査士会（調査士の登録は調査士会連合会だが、補助者の登録は調査士会）"},
+  {id:1001, cat:"T 土地家屋調査士法（法人・補助者）", q:"調査士法人の設立要件は？（何が必要で、何が不要か）", a:"設立の登記が必要（×法務大臣の許可は不要）"},
+  {id:1002, cat:"T 土地家屋調査士法（法人・補助者）", q:"調査士法人設立時に加入する調査士会は？", a:"主たる事務所在地の調査士会"},
+  {id:1003, cat:"T 土地家屋調査士法（法人・補助者）", q:"調査士法人を設立・解散したらいつまでに届け出る？", a:"二週間以内"},
+  {id:1004, cat:"T 土地家屋調査士法（法人・補助者）", q:"調査士法人の設立・解散の届け出先は？", a:"調査士会および調査士会連合会"},
+  {id:1005, cat:"T 土地家屋調査士法（法人・補助者）", q:"「二週間以内に届け出る」必要があるのはどんな場合？", a:"調査士法人を設立・解散した場合"},
+
+  // ===== U: 所有権証明書について =====
+  {id:1050, cat:"U 所有権証明書について", q:"土地の地積が正しい地積より増加する場合、所有権証明書は必要か？", a:"不要"},
+  {id:1051, cat:"U 所有権証明書について", q:"建物の床面積が正しい面積より増加する場合、所有権証明書は必要か？", a:"必要"},
+  {id:1052, cat:"U 所有権証明書について", q:"地積・床面積増加で所有権証明書の要否が土地と建物で異なる理由は？", a:"土地→不要、建物→必要（増加分の所有権を証明する必要があるため）"},
+
+  // ===== V: 添付書類について =====
+  {id:1100, cat:"V 添付書類について", q:"表題部所有者持分更生登記の際、持分の変更の無い共有者の承諾書は必要か？", a:"不要"},
+  {id:1101, cat:"V 添付書類について", q:"「持分の変更の無い共有者の承諾書は不要」なのはどの登記？", a:"表題部所有者持分更生登記"},
+
+  // ===== W: 合筆・合併の制限 =====
+  {id:1150, cat:"W 合筆・合併の制限", q:"登記記録の登録番号が同一の場合、合筆は可能か？", a:"合筆可能"},
+  {id:1151, cat:"W 合筆・合併の制限", q:"管轄が異なる土地同士の合筆は可能か？", a:"不可（特定の登記を経ないと合筆できない）"},
+  {id:1152, cat:"W 合筆・合併の制限", q:"相続登記が先に入っている場合でも合筆できるか？", a:"相続登記を通さなくても合筆可能"},
+  {id:1153, cat:"W 合筆・合併の制限", q:"合併制限：受付番号及び日付が同一でない場合の合併は？", a:"合併出来ない"},
+  {id:1154, cat:"W 合筆・合併の制限", q:"合併制限：所有権以外の登記がある場合の合併は？", a:"合併不可"},
+
+  // ===== X: 各登記ごとの間違えやすいポイントまとめ =====
+  {id:1200, cat:"X 各登記ごとの間違えやすいポイント", q:"原因日付で「に・から」を使う登記は？", a:"分筆・分合筆・分割・分割合併・建物区分（土地2・建物3）"},
+  {id:1201, cat:"X 各登記ごとの間違えやすいポイント", q:"原因日付で「に・を」を使う登記は？", a:"合筆・合併（土地1・建物1）"},
+  {id:1202, cat:"X 各登記ごとの間違えやすいポイント", q:"原因日付で「を・から」を使う登記は？", a:"区分建物区分（建物1）"},
+  {id:1203, cat:"X 各登記ごとの間違えやすいポイント", q:"原因日付で「を・に」を使う登記は？", a:"区分合併（建物1）"},
+  {id:1204, cat:"X 各登記ごとの間違えやすいポイント", q:"原因日付で「と・と・を」を使う登記は？", a:"合体（建物1）"},
+  {id:1205, cat:"X 各登記ごとの間違えやすいポイント", q:"三筆の土地（3番1・3番2・3番3）を合筆する場合の原因日付は？", a:"3番1に合筆／3番1に合筆／③3番2、3番3を合筆"},
+  {id:1206, cat:"X 各登記ごとの間違えやすいポイント", q:"土地分合筆登記の際、省略できない地番の書き方は？", a:"3番2←※省略しない（3番2・から派生した番号は省略不可）"},
+  {id:1207, cat:"X 各登記ごとの間違えやすいポイント", q:"分棟・分割の際の登記の目的は？", a:"建物表題部変更・建物分割登記"},
+  {id:1208, cat:"X 各登記ごとの間違えやすいポイント", q:"新たにB区分建物を増築したことによるA普通建物→区分建物への表題部変更登記の際の原因日付は？", a:"年月日区分建物増築"},
+  {id:1209, cat:"X 各登記ごとの間違えやすいポイント", q:"区分建物区分登記で敷地権の規約を定めた場合、何が必要？", a:"規約証明書の提出が必要"},
+  {id:1210, cat:"X 各登記ごとの間違えやすいポイント", q:"区分建物区分登記の原因日付は？", a:"③3番3の3を区分、3番3の2から区分"},
+  {id:1211, cat:"X 各登記ごとの間違えやすいポイント", q:"区分建物合併登記の建物の原因日付は？", a:"③3番3の3を合筆、3番3の2に合併"},
+  {id:1212, cat:"X 各登記ごとの間違えやすいポイント", q:"区分建物合併登記の敷地権の原因日付は？", a:"③変更"},
+  {id:1213, cat:"X 各登記ごとの間違えやすいポイント", q:"区分建物の合体登記後の敷地権の原因日付の書き方は？", a:"平成○年○月○日敷地権（合体）※合体のあった日にちを記載"},
+  {id:1214, cat:"X 各登記ごとの間違えやすいポイント", q:"所在を記載する登記とその理由は？（区分関連）", a:"普通建物→区分建物の表題部変更登記\n理由：区分建物増築により所在が変更となる可能性がある為"},
+  {id:1215, cat:"X 各登記ごとの間違えやすいポイント", q:"所在を記載しない登記とその理由は？（区分関連）", a:"建物区分登記\n理由：物理的変化が無く、所在にも変更が無い事が明らかな為"},
+
+  // ===== Y: 登記完了証の通知 =====
+  {id:1300, cat:"Y 登記完了証の通知", q:"申請人が2人以上いる場合、何名に通知が必要？", a:"その内1人に通知すれば足りる"},
+  {id:1301, cat:"Y 登記完了証の通知", q:"所有者の更正・持分の更正の場合、更正前の所有者への通知は？", a:"更正前の所有者にも通知する（2人以上の場合はその内1人）"},
+  {id:1302, cat:"Y 登記完了証の通知", q:"ABC3名の共有の土地でAが申請した場合の通知先は？", a:"Aと、BCどちらか1名に通知する"},
+  {id:1303, cat:"Y 登記完了証の通知", q:"持分の価格の過半数により分筆・合筆された場合の通知先は？", a:"共有者全員に完了した旨が通知される"},
+  {id:1304, cat:"Y 登記完了証の通知", q:"嘱権や代位による登記が完了した場合の通知先は？", a:"被代位者が2人以上いる時は、その内1名に通知すれば足りる"},
+];
+
+// ===== 状態 =====
+let selCats=['all'], queue=[], idx=0;
+let okCount=0, ngCount=0, history=[];
+let nextId=2000, listCat='all';
+
+// ===== タブ =====
+function showTab(name,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('s-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='add')refreshAddScreen();
+  if(name==='results')renderResults();
+  if(name==='category')renderCatGrid();
+}
+
+// ===== カテゴリ =====
+function getCats(){return[...new Set(DB.map(q=>q.cat))].sort();}
+function getFiltered(){return selCats.includes('all')?[...DB]:DB.filter(q=>selCats.includes(q.cat));}
+
+function renderCatGrid(){
+  const g=document.getElementById('cat-grid');
+  g.innerHTML=`<button class="cat-btn all ${selCats.includes('all')?'selected':''}" onclick="selCat('all')">📚 すべて（${DB.length}問）</button>`;
+  getCats().forEach(c=>{
+    const cnt=DB.filter(q=>q.cat===c).length;
+    g.innerHTML+=`<button class="cat-btn ${selCats.includes(c)?'selected':''}" onclick="selCat(${JSON.stringify(c)})"><b>${c}</b><br><small style="color:#888">${cnt}問</small></button>`;
+  });
+}
+
+function selCat(c){
+  if(c==='all'){selCats=['all'];}
+  else{
+    selCats=selCats.filter(x=>x!=='all');
+    selCats.includes(c)?selCats=selCats.filter(x=>x!==c):selCats.push(c);
+    if(selCats.length===0)selCats=['all'];
+  }
+  renderCatGrid();
+}
+
+// ===== クイズ =====
+function startQuiz(){
+  queue=getFiltered();shuffle(queue);
+  idx=0;okCount=0;ngCount=0;history=[];
+  updateScore();renderCard();
+}
+function shuffleAndRestart(){
+  if(queue.length===0){startQuiz();return;}
+  shuffle(queue);idx=0;renderCard();
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+
+function renderCard(){
+  const area=document.getElementById('card-area');
+  if(queue.length===0){area.innerHTML='<div class="empty"><p>カテゴリを選んでスタートしてください</p></div>';return;}
+  if(idx>=queue.length){
+    const rate=okCount+ngCount>0?Math.round(okCount/(okCount+ngCount)*100):0;
+    area.innerHTML=`<div class="card" style="text-align:center;justify-content:center;gap:12px">
+      <div style="font-size:2rem">🎉</div>
+      <div style="font-size:1.1rem;font-weight:bold">全問完了！</div>
+      <div style="color:#aaa;margin:8px 0">正答率 ${rate}%（${okCount} / ${okCount+ngCount}）</div>
+      <button class="ctrl-btn primary" style="width:100%" onclick="startQuiz()">もう一度</button>
+    </div>`;return;
+  }
+  const q=queue[idx];
+  document.getElementById('prog').textContent=`${idx+1} / ${queue.length}`;
+  area.innerHTML=`<div class="card">
+    <div>
+      <div class="card-category">${q.cat}</div>
+      <div class="card-question">${q.q.replace(/\n/g,'<br>')}</div>
+    </div>
+    <div>
+      <div class="card-answer" id="ans-box">
+        <div class="card-answer-label">解答</div>
+        ${q.a.replace(/\n/g,'<br>')}
+      </div>
+      <div class="card-actions" id="c-actions">
+        <button class="action-btn reveal" onclick="reveal()">💡 解答を見る</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function reveal(){
+  document.getElementById('ans-box').classList.add('show');
+  document.getElementById('c-actions').innerHTML=`
+    <button class="action-btn correct" onclick="rec(true)">✓ 正解</button>
+    <button class="action-btn wrong" onclick="rec(false)">✗ 不正解</button>`;
+}
+
+function rec(ok){
+  const q=queue[idx];
+  history.push({cat:q.cat,q:q.q,a:q.a,ok});
+  if(ok)okCount++;else ngCount++;
+  idx++;updateScore();renderCard();
+}
+
+function updateScore(){
+  document.getElementById('sc-c').textContent=okCount;
+  document.getElementById('sc-w').textContent=ngCount;
+  const rem=queue.length-idx;
+  document.getElementById('sc-r').textContent=rem>=0?rem:'-';
+  const tot=okCount+ngCount;
+  document.getElementById('sc-p').textContent=tot>0?Math.round(okCount/tot*100)+'%':'-';
+}
+
+// ===== 追加画面 =====
+function refreshAddScreen(){
+  const sel=document.getElementById('f-cat-sel');
+  sel.innerHTML='<option value="">選択...</option>';
+  getCats().forEach(c=>{sel.innerHTML+=`<option value="${c}">${c}</option>`;});
+  renderListFilters();
+}
+
+function addQ(){
+  const catSel=document.getElementById('f-cat-sel').value;
+  const catNew=document.getElementById('f-cat-new').value.trim();
+  const cat=catNew||catSel;
+  const q=document.getElementById('f-q').value.trim();
+  const a=document.getElementById('f-a').value.trim();
+  const rq=document.getElementById('f-rq').value.trim();
+  if(!cat||!q||!a){alert('カテゴリ・問題文・解答は必須です');return;}
+  DB.push({id:nextId++,cat,q,a});
+  if(rq)DB.push({id:nextId++,cat,q:rq,a:q});
+  ['f-cat-new','f-q','f-a','f-rq'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-cat-sel').value='';
+  alert('追加しました！');
+  refreshAddScreen();
+}
+
+// ===== 問題一覧 =====
+function renderListFilters(){
+  const row=document.getElementById('list-filters');
+  row.innerHTML=`<button class="filter-chip ${listCat==='all'?'active':''}" onclick="setListCat('all')">すべて</button>`;
+  getCats().forEach(c=>{
+    row.innerHTML+=`<button class="filter-chip ${listCat===c?'active':''}" onclick="setListCat(${JSON.stringify(c)})">${c.substring(0,6)}</button>`;
+  });
+  renderQList();
+}
+
+function setListCat(c){listCat=c;renderListFilters();}
+
+function renderQList(){
+  const list=document.getElementById('q-list');
+  const items=listCat==='all'?DB:DB.filter(q=>q.cat===listCat);
+  if(items.length===0){list.innerHTML='<div class="empty"><p>問題がありません</p></div>';return;}
+  list.innerHTML=items.map(q=>`
+    <div class="q-item">
+      <div class="q-item-cat">${q.cat}</div>
+      <div class="q-item-q">${q.q}</div>
+      <div class="q-item-a">→ ${q.a.replace(/\n/g,' / ')}</div>
+      <button class="del-btn" onclick="delQ(${q.id})">削除</button>
+    </div>`).join('');
+}
+
+function delQ(id){
+  if(!confirm('この問題を削除しますか？'))return;
+  DB=DB.filter(q=>q.id!==id);
+  renderListFilters();
+}
+
+// ===== 結果画面 =====
+function renderResults(){
+  const list=document.getElementById('results-list');
+  if(history.length===0){list.innerHTML='<div class="empty"><p>まだ回答がありません</p></div>';return;}
+  list.innerHTML=history.slice().reverse().map(h=>`
+    <div class="result-card ${h.ok?'c':'w'}">
+      <div class="result-meta">${h.cat} | ${h.ok?'✓ 正解':'✗ 不正解'}</div>
+      <div class="result-q">${h.q}</div>
+      <div class="result-a">→ ${h.a.replace(/\n/g,' / ')}</div>
+    </div>`).join('');
+}
+
+// ===== 起動 =====
+renderCatGrid();
+</script>
+</body>
+</html>
