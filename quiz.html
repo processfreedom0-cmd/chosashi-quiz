@@ -412,7 +412,7 @@ function renderCatGrid(){
   g.innerHTML=`<button class="cat-btn all ${selCats.includes('all')?'selected':''}" onclick="selCat('all')">📚 すべて（${DB.length}問）</button>`;
   getCats().forEach(c=>{
     const cnt=DB.filter(q=>q.cat===c).length;
-    g.innerHTML+=`<button class="cat-btn ${selCats.includes(c)?'selected':''}" onclick="selCat(${JSON.stringify(c)})"><b>${c}</b><br><small style="color:#888">${cnt}問</small></button>`;
+    g.innerHTML+=`<button class="cat-btn ${selCats.includes(c)?'selected':''}" onclick='selCat(${JSON.stringify(c)})'><b>${c}</b><br><small style="color:#888">${cnt}問</small></button>`;
   });
 }
 
