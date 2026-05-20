@@ -43,6 +43,7 @@ details[open] .cat-arrow{transform:rotate(90deg)}
   <button class="btn btn-red" onclick="expandAll()">▼ 全て展開</button>
   <button class="btn btn-gray" onclick="collapseAll()">▲ 全て折りたたみ</button>
   <button class="btn btn-blue" id="ans-btn" onclick="toggleAllAns()">👁 解答を全表示</button>
+  <button class="btn" id="edit-btn" onclick="toggleEditMode()" style="background:#e8eaed;color:#555">✏️ 編集</button>
 </div>
 <div class="content" id="content"></div>
 <script>
@@ -75,7 +76,7 @@ const DATA = [
     {g:'30年間',sub:[
       {t:'建物の閉鎖登記記録',v:'30年間'},
       {t:'登記の申請情報と添付情報',v:'30年間'},
-      {t:'変更または更生前の図面',v:'30年間'},
+      {t:'変更または更正前の図面',v:'30年間'},
       {t:'電磁的記録に保存された書面の図面',v:'30年間'},
       {t:'電磁的記録に保存された書面の地役権図面',v:'30年間'},
       {t:'職権表示登記つづり込み帳の書類情報',v:'30年間'},
@@ -252,10 +253,10 @@ const DATA = [
     {t:'地図に準ずる図面の地番に誤りがある場合、土地所在図や地積測量図の提出は？',v:'不要'},
     {t:'地図にある土地の区画、地図に準ずる図面の位置・形状に誤りがある場合、土地所在図や地積測量図の提出は？',v:'必要'},
     {t:'地図に準ずる図面の位置や区画に誤りがある場合、登記所に備え付けの地積測量図で確認可能な場合、図面の省略は？',v:'省略可能'},
-    {t:'地図訂正の申出の際に地積に錯誤がある場合は？',v:'訂正の申出と合わせて地積更生登記が必要'},
-    {t:'複数の土地の訂正の申出を「一の申出情報」で申請出来る？',v:'出来ない（「一の申出」という言葉は無い）\n※訂正の申出と更生登記を「一の申請兼申出情報」で申請することは出来る'},
+    {t:'地図訂正の申出の際に地積に錯誤がある場合は？',v:'訂正の申出と合わせて地積更正登記が必要'},
+    {t:'複数の土地の訂正の申出を「一の申出情報」で申請出来る？',v:'出来ない（「一の申出」という言葉は無い）\n※訂正の申出と更正登記を「一の申請兼申出情報」で申請することは出来る'},
     {t:'土地所在図・地積測量図・建物図面や各階平面図の訂正の申出の場合、登記所に備え付けの図面を特定すれば訂正後の図面を省略できる？',v:'地図訂正と違い、訂正後の図面の省略はできない'},
-    {t:'地積や床面積の更生登記が必要な場合、訂正の申出は出来る？',v:'地積更生登記が必要な場合は、地積更生登記をしなければならず、訂正の申出は出来ない（地図訂正と異なる）'},
+    {t:'地積や床面積の更正登記が必要な場合、訂正の申出は出来る？',v:'地積更正登記が必要な場合は、地積更正登記をしなければならず、訂正の申出は出来ない（地図訂正と異なる）'},
   ]},
   {id:'M',title:'M 地役権について',items:[
     {g:'承役地（いいよという方）',sub:[
@@ -313,12 +314,12 @@ const DATA = [
       {t:'やむを得ない事由の場合の責任の範囲は？',v:'選任・監督の範囲に限り責任を負う'},
     ]},
   ]},
-  {id:'R',title:'R 変更証明書・更生証明書',items:[
-    {g:'変更・更生証明書を提出して申請可能な登記は？',sub:[
+  {id:'R',title:'R 変更証明書・更正証明書',items:[
+    {g:'変更・更正証明書を提出して申請可能な登記は？',sub:[
       {t:'①',v:'土地の地目変更登記'},
       {t:'②',v:'建物の滅失登記'},
     ]},
-    {g:'登記の申請以外で変更・更生証明書の提供で可能な手続きは？',sub:[
+    {g:'登記の申請以外で変更・更正証明書の提供で可能な手続きは？',sub:[
       {t:'申し出①',v:'地図訂正の申出'},
       {t:'申し出②',v:'添付図面の訂正の申出'},
       {t:'申し出③',v:'登記識別情報の失効の申出'},
@@ -326,7 +327,7 @@ const DATA = [
   ]},
   {id:'S',title:'S 要件',items:[
     {g:'土地',sub:[
-      {t:'地積更生登記とは？',v:'登記記録上の地積と土地の現況に相違がある場合に、現況に合致する為にする登記'},
+      {t:'地積更正登記とは？',v:'登記記録上の地積と土地の現況に相違がある場合に、現況に合致する為にする登記'},
       {t:'地積更正が必要な場合とは？',v:'登記記録上の地積を更正した実測面積が訴求の面積を超えているため'},
     ]},
     {g:'建物の要件',sub:[
@@ -361,7 +362,7 @@ const DATA = [
     {t:'建物の床面積が誤っており、正しい面積が元の面積より増加する場合、所有権証明書は？',v:'必要'},
   ]},
   {id:'V',title:'V 添付書類について',items:[
-    {t:'表題部所有者持分更生登記の際、持分の変更の無い共有者の承諾書は必要か？',v:'持分の変更の無い共有者の承諾書は不要'},
+    {t:'表題部所有者持分更正登記の際、持分の変更の無い共有者の承諾書は必要か？',v:'持分の変更の無い共有者の承諾書は不要'},
   ]},
   {id:'W',title:'W 合筆・合併の制限',items:[
     {g:'合筆制限',sub:[
@@ -429,9 +430,31 @@ const DATA = [
   ]},
 ];
 
+// Edit storage
+const EDITS_KEY = 'mmEditsTree';
+let edits = {};
+try { edits = JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) {}
+
 let showAns = false;
+let editMode = false;
+let editingKey = null;
+let gItemIdx = 0;
+
+function getKey(catId) {
+  return `${catId}_${gItemIdx++}`;
+}
+
+function getDisplayVals(origItem, key) {
+  const e = edits[key];
+  return {
+    t: e ? e.t : origItem.t,
+    v: e ? e.v : origItem.v,
+    edited: !!e
+  };
+}
 
 function build() {
+  gItemIdx = 0;
   const cont = document.getElementById('content');
   cont.innerHTML = '';
   DATA.forEach(cat => {
@@ -449,9 +472,13 @@ function build() {
         gl.className = 'group-label';
         gl.textContent = item.g;
         body.appendChild(gl);
-        item.sub.forEach(si => body.appendChild(makeRow(si)));
+        item.sub.forEach(si => {
+          const key = getKey(cat.id);
+          body.appendChild(makeRow(si, key));
+        });
       } else {
-        body.appendChild(makeRow(item));
+        const key = getKey(cat.id);
+        body.appendChild(makeRow(item, key));
       }
     });
     det.appendChild(body);
@@ -459,16 +486,83 @@ function build() {
   });
 }
 
-function makeRow(item) {
+function makeRow(origItem, key) {
+  const di = getDisplayVals(origItem, key);
   const row = document.createElement('div');
   row.className = 'item-row';
+  row.dataset.key = key;
+
+  const topic = document.createElement('span');
+  topic.className = 'item-topic';
+  topic.textContent = di.t;
+  if (di.edited) topic.style.cssText = 'flex:1;font-size:.83rem;color:#333;line-height:1.5;border-left:2px solid #e67e22;padding-left:6px';
+
   const ans = document.createElement('span');
   ans.className = 'item-ans' + (showAns ? '' : ' hidden');
-  ans.innerHTML = item.v.replace(/\n/g,'<br>');
-  row.innerHTML = `<span class="item-topic">${item.t}</span>`;
+  ans.innerHTML = di.v.replace(/\n/g,'<br>');
+
+  row.appendChild(topic);
   row.appendChild(ans);
-  row.onclick = () => ans.classList.toggle('hidden');
+
+  if (editMode) {
+    const btn = document.createElement('button');
+    btn.textContent = '✏️';
+    btn.title = '編集';
+    btn.style.cssText = 'background:none;border:none;font-size:.85rem;cursor:pointer;flex-shrink:0;padding:2px 6px;opacity:.7';
+    btn.onclick = (e) => { e.stopPropagation(); openEditModal(key, di.t, di.v); };
+    row.appendChild(btn);
+  } else {
+    row.onclick = () => ans.classList.toggle('hidden');
+  }
   return row;
+}
+
+function toggleEditMode() {
+  editMode = !editMode;
+  const btn = document.getElementById('edit-btn');
+  btn.style.background = editMode ? '#fff3cd' : '#e8eaed';
+  btn.style.color = editMode ? '#856404' : '#555';
+  btn.textContent = editMode ? '✏️ 編集中' : '✏️ 編集';
+  // Preserve open state
+  const openIds = [...document.querySelectorAll('details[open]')].map((d,i) => i);
+  build();
+  document.querySelectorAll('details').forEach((d,i) => { if(openIds.includes(i)) d.open = true; });
+}
+
+function openEditModal(key, t, v) {
+  editingKey = key;
+  document.getElementById('edit-t').value = t;
+  document.getElementById('edit-v').value = v;
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function saveCurrentEdit() {
+  if (!editingKey) return;
+  const t = document.getElementById('edit-t').value.trim();
+  const v = document.getElementById('edit-v').value.trim();
+  if (!t || !v) return;
+  edits[editingKey] = {t, v};
+  localStorage.setItem(EDITS_KEY, JSON.stringify(edits));
+  closeEditModal();
+  const openIds = [...document.querySelectorAll('details[open]')].map((d,i) => i);
+  build();
+  document.querySelectorAll('details').forEach((d,i) => { if(openIds.includes(i)) d.open = true; });
+}
+
+function resetCurrentEdit() {
+  if (!editingKey) return;
+  if (!confirm('元のデータに戻しますか？')) return;
+  delete edits[editingKey];
+  localStorage.setItem(EDITS_KEY, JSON.stringify(edits));
+  closeEditModal();
+  const openIds = [...document.querySelectorAll('details[open]')].map((d,i) => i);
+  build();
+  document.querySelectorAll('details').forEach((d,i) => { if(openIds.includes(i)) d.open = true; });
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+  editingKey = null;
 }
 
 function expandAll() {
@@ -487,5 +581,24 @@ function toggleAllAns() {
 
 build();
 </script>
+<!-- Edit Modal -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:16px;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <h3 style="color:#c0392b;margin-bottom:16px;font-size:.95rem">✏️ 項目を編集</h3>
+    <div style="margin-bottom:12px">
+      <label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">質問</label>
+      <textarea id="edit-t" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;min-height:80px;resize:vertical;line-height:1.5;font-family:inherit"></textarea>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">解答</label>
+      <textarea id="edit-v" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;min-height:80px;resize:vertical;line-height:1.5;font-family:inherit"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveCurrentEdit()" style="flex:2;padding:11px;background:#c0392b;color:#fff;border:none;border-radius:10px;font-weight:bold;font-size:.85rem;cursor:pointer">💾 保存</button>
+      <button onclick="resetCurrentEdit()" style="flex:1;padding:11px;background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:10px;font-weight:bold;font-size:.75rem;cursor:pointer">🔄 元に戻す</button>
+      <button onclick="closeEditModal()" style="flex:1;padding:11px;background:#e8eaed;color:#555;border:none;border-radius:10px;font-weight:bold;font-size:.85rem;cursor:pointer">✕</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

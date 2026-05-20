@@ -55,6 +55,7 @@ header p{font-size:.75rem;color:#999;margin-top:3px}
   <span class="nav-count" id="nav-count">-/-</span>
   <button class="nav-btn reveal" onclick="toggleAns()">解答を見る</button>
   <button class="nav-btn next" onclick="move(1)">次へ ▶</button>
+  <button id="edit-btn" onclick="toggleEditMode()" style="flex:none;padding:11px 12px;background:#e8eaed;color:#555;border:none;border-radius:10px;font-size:.85rem;font-weight:bold;cursor:pointer">✏️</button>
 </div>
 <script>
 const DATA = [
@@ -81,7 +82,7 @@ const DATA = [
     {g:'永久',t:'閉鎖した建物所在図',v:'永久'},
     {g:'30年間',t:'建物の閉鎖登記記録',v:'30年間'},
     {g:'30年間',t:'登記の申請情報と添付情報',v:'30年間'},
-    {g:'30年間',t:'変更または更生前の図面',v:'30年間'},
+    {g:'30年間',t:'変更または更正前の図面',v:'30年間'},
     {g:'30年間',t:'電磁的記録に保存された書面の図面',v:'30年間'},
     {g:'30年間',t:'電磁的記録に保存された書面の地役権図面',v:'30年間'},
     {g:'30年間',t:'職権表示登記つづり込み帳の書類情報',v:'30年間'},
@@ -191,10 +192,10 @@ const DATA = [
     {t:'地図に準ずる図面の地番に誤りがある場合、土地所在図や地積測量図の提出は？',v:'不要'},
     {t:'地図にある土地の区画、地図に準ずる図面の位置・形状に誤りがある場合、土地所在図や地積測量図の提出は？',v:'必要'},
     {t:'地図に準ずる図面の位置や区画に誤りがある場合、登記所に備え付けの地積測量図で確認可能な場合、図面の省略は？',v:'省略可能'},
-    {t:'地図訂正の申出の際に地積に錯誤がある場合は？',v:'訂正の申出と合わせて地積更生登記が必要'},
-    {t:'複数の土地の訂正の申出を「一の申出情報」で申請出来る？',v:'出来ない（「一の申出」という言葉は無い）\n※訂正の申出と更生登記を「一の申請兼申出情報」で申請することは出来る'},
+    {t:'地図訂正の申出の際に地積に錯誤がある場合は？',v:'訂正の申出と合わせて地積更正登記が必要'},
+    {t:'複数の土地の訂正の申出を「一の申出情報」で申請出来る？',v:'出来ない（「一の申出」という言葉は無い）\n※訂正の申出と更正登記を「一の申請兼申出情報」で申請することは出来る'},
     {t:'土地所在図・地積測量図・建物図面や各階平面図の訂正の申出の場合、登記所に備え付けの図面を特定すれば訂正後の図面を省略できる？',v:'地図訂正と違い、訂正後の図面の省略はできない'},
-    {t:'地積や床面積の更生登記が必要な場合、訂正の申出は出来る？',v:'地積更生登記が必要な場合は、地積更生登記をしなければならず、訂正の申出は出来ない（地図訂正と異なる）'},
+    {t:'地積や床面積の更正登記が必要な場合、訂正の申出は出来る？',v:'地積更正登記が必要な場合は、地積更正登記をしなければならず、訂正の申出は出来ない（地図訂正と異なる）'},
   ]},
   {id:'M',title:'M 地役権について',items:[
     {g:'承役地（いいよという方）',t:'分筆・合筆はできる？',v:'分筆・合筆可能（一筆の一部に設定出来るから）'},
@@ -234,7 +235,7 @@ const DATA = [
     {g:'法定代理人',t:'復代理を委任した場合の責任の範囲（原則）は？',v:'原則全責任を負う'},
     {g:'法定代理人',t:'やむを得ない事由の場合の責任の範囲は？',v:'選任・監督の範囲に限り責任を負う'},
   ]},
-  {id:'R',title:'R 変更証明書・更生証明書',items:[
+  {id:'R',title:'R 変更証明書・更正証明書',items:[
     {g:'申請可能な登記',t:'①',v:'土地の地目変更登記'},
     {g:'申請可能な登記',t:'②',v:'建物の滅失登記'},
     {g:'申請以外の手続き',t:'申し出①',v:'地図訂正の申出'},
@@ -242,7 +243,7 @@ const DATA = [
     {g:'申請以外の手続き',t:'申し出③',v:'登記識別情報の失効の申出'},
   ]},
   {id:'S',title:'S 要件',items:[
-    {g:'土地',t:'地積更生登記とは？',v:'登記記録上の地積と土地の現況に相違がある場合に、現況に合致する為にする登記'},
+    {g:'土地',t:'地積更正登記とは？',v:'登記記録上の地積と土地の現況に相違がある場合に、現況に合致する為にする登記'},
     {g:'土地',t:'地積更正が必要な場合とは？',v:'登記記録上の地積を更正した実測面積が訴求の面積を超えているため'},
     {g:'建物の要件',t:'建物の3要件は？',v:'外気分性・土地定着性・用途性'},
     {g:'建物の要件',t:'区分建物の要件は？',v:'構造上の独立性がある・利用上の独立性がある'},
@@ -266,7 +267,7 @@ const DATA = [
     {t:'建物の床面積が誤っており、正しい面積が元の面積より増加する場合、所有権証明書は？',v:'必要'},
   ]},
   {id:'V',title:'V 添付書類について',items:[
-    {t:'表題部所有者持分更生登記の際、持分の変更の無い共有者の承諾書は必要か？',v:'持分の変更の無い共有者の承諾書は不要'},
+    {t:'表題部所有者持分更正登記の際、持分の変更の無い共有者の承諾書は必要か？',v:'持分の変更の無い共有者の承諾書は不要'},
   ]},
   {id:'W',title:'W 合筆・合併の制限',items:[
     {g:'合筆制限',t:'鉱害賠償登録の登録番号が同一の場合、合筆は？',v:'合筆可能'},
@@ -306,11 +307,24 @@ const DATA = [
   ]},
 ];
 
-// Flatten all items with cat info
+// Edit storage
+const EDITS_KEY = 'mmEditsCard';
+let edits = {};
+try { edits = JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) {}
+
+// Flatten all items with cat info, apply stored edits
 let allCards = [];
 DATA.forEach(cat => {
   cat.items.forEach(item => {
-    allCards.push({cat:cat.id, catTitle:cat.title, g:item.g||'', t:item.t, v:item.v});
+    const key = `${cat.id}_${allCards.length}`;
+    const e = edits[key];
+    allCards.push({
+      cat: cat.id, catTitle: cat.title, g: item.g||'',
+      t: e ? e.t : item.t,
+      v: e ? e.v : item.v,
+      key: key,
+      edited: !!e
+    });
   });
 });
 
@@ -318,6 +332,8 @@ let selCat = 'all';
 let queue = [];
 let idx = 0;
 let ansVisible = false;
+let editMode = false;
+let editingKey = null;
 
 function getQueue() {
   return selCat === 'all' ? [...allCards] : allCards.filter(c => c.cat === selCat);
@@ -350,15 +366,12 @@ function renderCard() {
   document.getElementById('nav-count').textContent = total === 0 ? '-/-' : `${idx+1}/${total}`;
   document.querySelector('.nav-btn.reveal').textContent = ansVisible ? '解答を隠す' : '解答を見る';
 
-  if(total === 0){
-    area.innerHTML = '<div class="empty">カードがありません</div>';
-    return;
-  }
+  if(total === 0){ area.innerHTML = '<div class="empty">カードがありません</div>'; return; }
   const card = queue[idx];
   area.innerHTML = `
-    <div class="card" onclick="toggleAns()">
+    <div class="card" onclick="${editMode ? '' : 'toggleAns()'}">
       <div>
-        <div class="card-cat">${card.catTitle}</div>
+        <div class="card-cat">${card.catTitle}${card.edited ? ' <span style="color:#e67e22;font-size:.65rem">✎編集済</span>' : ''}</div>
         ${card.g ? `<div class="card-group">▸ ${card.g}</div>` : ''}
         <div class="card-topic">${card.t}</div>
       </div>
@@ -369,7 +382,64 @@ function renderCard() {
         ${!ansVisible ? '<div class="card-hint">タップして解答を表示</div>' : ''}
       </div>
     </div>
+    ${editMode ? `<button onclick="openEditModal('${card.key}')" style="width:100%;margin-top:10px;padding:12px;background:#fff9e6;color:#856404;border:1px solid #ffc107;border-radius:12px;font-size:.85rem;font-weight:bold;cursor:pointer">✏️ このカードを編集</button>` : ''}
   `;
+}
+
+function toggleEditMode() {
+  editMode = !editMode;
+  const btn = document.getElementById('edit-btn');
+  btn.style.background = editMode ? '#fff3cd' : '#e8eaed';
+  btn.style.color = editMode ? '#856404' : '#555';
+  renderCard();
+}
+
+function openEditModal(key) {
+  const card = allCards.find(c => c.key === key);
+  if (!card) return;
+  editingKey = key;
+  document.getElementById('edit-t').value = card.t;
+  document.getElementById('edit-v').value = card.v;
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function saveCurrentEdit() {
+  if (!editingKey) return;
+  const t = document.getElementById('edit-t').value.trim();
+  const v = document.getElementById('edit-v').value.trim();
+  if (!t || !v) return;
+  edits[editingKey] = {t, v};
+  localStorage.setItem(EDITS_KEY, JSON.stringify(edits));
+  const card = allCards.find(c => c.key === editingKey);
+  if (card) { card.t = t; card.v = v; card.edited = true; }
+  queue = getQueue();
+  closeEditModal();
+  renderCard();
+}
+
+function resetCurrentEdit() {
+  if (!editingKey) return;
+  if (!confirm('元のデータに戻しますか？')) return;
+  delete edits[editingKey];
+  localStorage.setItem(EDITS_KEY, JSON.stringify(edits));
+  const globalIdx = parseInt(editingKey.split('_').pop());
+  let gIdx = 0, origItem = null;
+  outer: for (const cat of DATA) {
+    for (const item of cat.items) {
+      if (gIdx === globalIdx) { origItem = item; break outer; }
+      gIdx++;
+    }
+  }
+  const card = allCards.find(c => c.key === editingKey);
+  if (card && origItem) { card.t = origItem.t; card.v = origItem.v; card.edited = false; }
+  queue = getQueue();
+  closeEditModal();
+  renderCard();
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+  editingKey = null;
 }
 
 function toggleAns() {
@@ -387,5 +457,24 @@ buildChips();
 queue = getQueue();
 renderCard();
 </script>
+<!-- Edit Modal -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:16px;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <h3 style="color:#c0392b;margin-bottom:16px;font-size:.95rem">✏️ カードを編集</h3>
+    <div style="margin-bottom:12px">
+      <label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">質問</label>
+      <textarea id="edit-t" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;min-height:80px;resize:vertical;line-height:1.5;font-family:inherit"></textarea>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">解答</label>
+      <textarea id="edit-v" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;min-height:80px;resize:vertical;line-height:1.5;font-family:inherit"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveCurrentEdit()" style="flex:2;padding:11px;background:#c0392b;color:#fff;border:none;border-radius:10px;font-weight:bold;font-size:.85rem;cursor:pointer">💾 保存</button>
+      <button onclick="resetCurrentEdit()" style="flex:1;padding:11px;background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:10px;font-weight:bold;font-size:.75rem;cursor:pointer">🔄 元に戻す</button>
+      <button onclick="closeEditModal()" style="flex:1;padding:11px;background:#e8eaed;color:#555;border:none;border-radius:10px;font-weight:bold;font-size:.85rem;cursor:pointer">✕</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
