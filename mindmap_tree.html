@@ -44,6 +44,7 @@ details[open] .cat-arrow{transform:rotate(90deg)}
   <button class="btn btn-gray" onclick="collapseAll()">▲ 全て折りたたみ</button>
   <button class="btn btn-blue" id="ans-btn" onclick="toggleAllAns()">👁 解答を全表示</button>
   <button class="btn" id="edit-btn" onclick="toggleEditMode()" style="background:#e8eaed;color:#555">✏️ 編集</button>
+  <button class="btn" onclick="openAddModal()" style="background:#27ae60;color:#fff">＋ 追加</button>
 </div>
 <div class="content" id="content"></div>
 <script>
@@ -448,10 +449,20 @@ const DATA = [
       {t:'申告後の登記記録への効果は？',v:'登記名義人の死亡が記録され、相続人の氏名・住所等が記録される'},
     ]},
   ]},
+  {id:'AA',title:'AA 敷地権の発生について',items:[
+    {g:'建築前から権利を有していた場合',sub:[
+      {t:'区分建物の建築前から所有権・地上権・賃借権を有していた場合の敷地権発生日は？',v:'区分建物新築の日'},
+    ]},
+    {g:'建築後に権利を取得した場合',sub:[
+      {t:'区分建物建築後に所有権・地上権・賃借権を取得した場合の敷地権発生日は？',v:'所有権・地上権・賃借権の移転登記をした日\n×実体上の権利変動があった日ではない'},
+    ]},
+  ]},
 ];
 
 // Edit storage
 const EDITS_KEY = 'mmEditsTree';
+const ADD_KEY = 'mmCustomItemsTree';
+let customItems = []; try { customItems = JSON.parse(localStorage.getItem(ADD_KEY)||'[]'); } catch(e) {}
 let edits = {};
 try { edits = JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) {}
 
@@ -500,6 +511,17 @@ function build() {
         const key = getKey(cat.id);
         body.appendChild(makeRow(item, key));
       }
+    });
+    // Custom items for this section
+    customItems.filter(ci => ci.sectionId === cat.id).forEach(ci => {
+      if (ci.g) {
+        const gl = document.createElement('div');
+        gl.className = 'group-label';
+        gl.style.color = '#27ae60';
+        gl.textContent = '★ ' + ci.g;
+        body.appendChild(gl);
+      }
+      body.appendChild(makeCustomRow(ci));
     });
     det.appendChild(body);
     cont.appendChild(det);
@@ -556,6 +578,53 @@ function openEditModal(key, t, v) {
   document.getElementById('edit-modal').style.display = 'flex';
 }
 
+function makeCustomRow(ci) {
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.style.borderLeft = '3px solid #27ae60';
+  const topic = document.createElement('span');
+  topic.className = 'item-topic';
+  topic.textContent = ci.t;
+  const ans = document.createElement('span');
+  ans.className = 'item-ans' + (showAns ? '' : ' hidden');
+  ans.innerHTML = ci.v.replace(/\n/g,'<br>');
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '🗑️';
+  delBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:1rem;padding:4px;flex:none';
+  delBtn.onclick = () => deleteCustomItem(ci.customId);
+  row.appendChild(topic); row.appendChild(ans); row.appendChild(delBtn);
+  return row;
+}
+function openAddModal() {
+  const sel = document.getElementById('add-section');
+  sel.innerHTML = DATA.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+  document.getElementById('add-modal').style.display = 'flex';
+}
+function closeAddModal() {
+  document.getElementById('add-modal').style.display = 'none';
+  ['add-t','add-v','add-g'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+}
+function saveNewItem() {
+  const sectionId = document.getElementById('add-section').value;
+  const g = document.getElementById('add-g').value.trim();
+  const t = document.getElementById('add-t').value.trim();
+  const v = document.getElementById('add-v').value.trim();
+  if (!t || !v) { alert('質問と解答を入力してください'); return; }
+  customItems.push({customId:'custom_'+Date.now(), sectionId, g, t, v});
+  localStorage.setItem(ADD_KEY, JSON.stringify(customItems));
+  closeAddModal();
+  const openIds = [...document.querySelectorAll('details[open]')].map((d,i) => i);
+  build();
+  document.querySelectorAll('details').forEach((d,i) => { if(openIds.includes(i)) d.open = true; });
+}
+function deleteCustomItem(customId) {
+  if (!confirm('この項目を削除しますか？')) return;
+  customItems = customItems.filter(i => i.customId !== customId);
+  localStorage.setItem(ADD_KEY, JSON.stringify(customItems));
+  const openIds = [...document.querySelectorAll('details[open]')].map((d,i) => i);
+  build();
+  document.querySelectorAll('details').forEach((d,i) => { if(openIds.includes(i)) d.open = true; });
+}
 function saveCurrentEdit() {
   if (!editingKey) return;
   const t = document.getElementById('edit-t').value.trim();
@@ -602,7 +671,19 @@ function toggleAllAns() {
 build();
 </script>
 <!-- Edit Modal -->
-<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px">
+<div id="add-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:16px;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <h3 style="color:#27ae60;margin-bottom:16px;font-size:.95rem">＋ 項目を追加</h3>
+    <div style="margin-bottom:12px"><label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">セクション</label><select id="add-section" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;font-family:inherit"></select></div>
+    <div style="margin-bottom:12px"><label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">グループ（任意）</label><input id="add-g" type="text" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;font-family:inherit" placeholder="例：建物"></div>
+    <div style="margin-bottom:12px"><label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">質問</label><textarea id="add-t" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;min-height:80px;resize:vertical;line-height:1.5;font-family:inherit"></textarea></div>
+    <div style="margin-bottom:16px"><label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">解答</label><textarea id="add-v" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;min-height:80px;resize:vertical;line-height:1.5;font-family:inherit"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveNewItem()" style="flex:2;padding:11px;background:#27ae60;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:bold;cursor:pointer">追加する</button>
+      <button onclick="closeAddModal()" style="flex:1;padding:11px;background:#e8eaed;color:#555;border:none;border-radius:10px;font-size:.9rem;cursor:pointer">キャンセル</button>
+    </div>
+  </div>
+</div><div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:16px;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)">
     <h3 style="color:#c0392b;margin-bottom:16px;font-size:.95rem">✏️ 項目を編集</h3>
     <div style="margin-bottom:12px">

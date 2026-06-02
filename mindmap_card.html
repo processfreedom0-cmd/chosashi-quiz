@@ -56,6 +56,7 @@ header p{font-size:.75rem;color:#999;margin-top:3px}
   <button class="nav-btn reveal" onclick="toggleAns()">解答を見る</button>
   <button class="nav-btn next" onclick="move(1)">次へ ▶</button>
   <button id="edit-btn" onclick="toggleEditMode()" style="flex:none;padding:11px 12px;background:#e8eaed;color:#555;border:none;border-radius:10px;font-size:.85rem;font-weight:bold;cursor:pointer">✏️</button>
+<button onclick="openAddModal()" style="flex:none;padding:11px 12px;background:#27ae60;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:bold;cursor:pointer">＋</button>
 </div>
 <script>
 const DATA = [
@@ -327,28 +328,44 @@ const DATA = [
     {g:'相続人申告登記',t:'共同相続の場合、単独で申告できる？',v:'各相続人が単独で申告可能（全員で申請する必要はない）'},
     {g:'相続人申告登記',t:'申告後の登記記録への効果は？',v:'登記名義人の死亡が記録され、相続人の氏名・住所等が記録される'},
   ]},
+  {id:'AA',title:'AA 敷地権の発生について',items:[
+    {g:'建築前から権利を有していた場合',t:'建築前から所有権・地上権・賃借権を有していた場合の敷地権発生日は？',v:'区分建物新築の日'},
+    {g:'建築後に権利を取得した場合',t:'建築後に所有権・地上権・賃借権を取得した場合の敷地権発生日は？',v:'所有権・地上権・賃借権の移転登記をした日\n×実体上の権利変動があった日ではない'},
+  ]},
 ];
 
 // Edit storage
 const EDITS_KEY = 'mmEditsCard';
+const ADD_KEY = 'mmCustomItemsCard';
+let customItems = []; try { customItems = JSON.parse(localStorage.getItem(ADD_KEY)||'[]'); } catch(e) {}
 let edits = {};
 try { edits = JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) {}
 
-// Flatten all items with cat info, apply stored edits
-let allCards = [];
-DATA.forEach(cat => {
-  cat.items.forEach(item => {
-    const key = `${cat.id}_${allCards.length}`;
-    const e = edits[key];
-    allCards.push({
-      cat: cat.id, catTitle: cat.title, g: item.g||'',
-      t: e ? e.t : item.t,
-      v: e ? e.v : item.v,
-      key: key,
-      edited: !!e
+function rebuildAllCards() {
+  allCards = [];
+  DATA.forEach(cat => {
+    cat.items.forEach(item => {
+      const key = `${cat.id}_${allCards.length}`;
+      const e = edits[key];
+      allCards.push({
+        cat: cat.id, catTitle: cat.title, g: item.g||'',
+        t: e ? e.t : item.t, v: e ? e.v : item.v,
+        key: key, edited: !!e, custom: false
+      });
     });
   });
-});
+  customItems.forEach(ci => {
+    const catData = DATA.find(c => c.id === ci.sectionId);
+    allCards.push({
+      cat: ci.sectionId, catTitle: catData ? catData.title : ci.sectionId,
+      g: ci.g||'', t: ci.t, v: ci.v,
+      key: ci.customId, edited: false, custom: true, customId: ci.customId
+    });
+  });
+}
+// Flatten all items with cat info, apply stored edits
+let allCards = [];
+rebuildAllCards();
 
 let selCat = 'all';
 let queue = [];
@@ -425,6 +442,38 @@ function openEditModal(key) {
   document.getElementById('edit-modal').style.display = 'flex';
 }
 
+function openAddModal() {
+  const sel = document.getElementById('add-section');
+  sel.innerHTML = DATA.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+  document.getElementById('add-modal').style.display = 'flex';
+}
+function closeAddModal() {
+  document.getElementById('add-modal').style.display = 'none';
+  ['add-t','add-v','add-g'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+}
+function saveNewItem() {
+  const sectionId = document.getElementById('add-section').value;
+  const g = document.getElementById('add-g').value.trim();
+  const t = document.getElementById('add-t').value.trim();
+  const v = document.getElementById('add-v').value.trim();
+  if (!t || !v) { alert('質問と解答を入力してください'); return; }
+  customItems.push({customId:'custom_'+Date.now(), sectionId, g, t, v});
+  localStorage.setItem(ADD_KEY, JSON.stringify(customItems));
+  rebuildAllCards();
+  queue = getQueue();
+  buildChips();
+  closeAddModal();
+  render();
+}
+function deleteCustomItem(customId) {
+  if (!confirm('この項目を削除しますか？')) return;
+  customItems = customItems.filter(i => i.customId !== customId);
+  localStorage.setItem(ADD_KEY, JSON.stringify(customItems));
+  rebuildAllCards();
+  queue = getQueue();
+  if (idx >= queue.length) idx = Math.max(0, queue.length - 1);
+  render();
+}
 function saveCurrentEdit() {
   if (!editingKey) return;
   const t = document.getElementById('edit-t').value.trim();
@@ -480,7 +529,19 @@ queue = getQueue();
 renderCard();
 </script>
 <!-- Edit Modal -->
-<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px">
+<div id="add-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:16px;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <h3 style="color:#27ae60;margin-bottom:16px;font-size:.95rem">＋ 項目を追加</h3>
+    <div style="margin-bottom:12px"><label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">セクション</label><select id="add-section" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;font-family:inherit"></select></div>
+    <div style="margin-bottom:12px"><label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">グループ（任意）</label><input id="add-g" type="text" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;font-family:inherit" placeholder="例：建物"></div>
+    <div style="margin-bottom:12px"><label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">質問</label><textarea id="add-t" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;min-height:80px;resize:vertical;line-height:1.5;font-family:inherit"></textarea></div>
+    <div style="margin-bottom:16px"><label style="font-size:.75rem;color:#666;display:block;margin-bottom:4px">解答</label><textarea id="add-v" style="width:100%;border:1px solid #d0d7e3;border-radius:8px;padding:10px;font-size:.85rem;min-height:80px;resize:vertical;line-height:1.5;font-family:inherit"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveNewItem()" style="flex:2;padding:11px;background:#27ae60;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:bold;cursor:pointer">追加する</button>
+      <button onclick="closeAddModal()" style="flex:1;padding:11px;background:#e8eaed;color:#555;border:none;border-radius:10px;font-size:.9rem;cursor:pointer">キャンセル</button>
+    </div>
+  </div>
+</div><div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:16px;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)">
     <h3 style="color:#c0392b;margin-bottom:16px;font-size:.95rem">✏️ カードを編集</h3>
     <div style="margin-bottom:12px">
