@@ -591,8 +591,9 @@ function makeCustomRow(ci) {
   const delBtn = document.createElement('button');
   delBtn.textContent = '🗑️';
   delBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:1rem;padding:4px;flex:none';
-  delBtn.onclick = () => deleteCustomItem(ci.customId);
+  delBtn.onclick = (e) => { e.stopPropagation(); deleteCustomItem(ci.customId); };
   row.appendChild(topic); row.appendChild(ans); row.appendChild(delBtn);
+  row.onclick = () => ans.classList.toggle('hidden');
   return row;
 }
 function openAddModal() {
